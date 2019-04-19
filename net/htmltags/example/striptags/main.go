@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"Tada/src/components/net/htmltags"
+	"github.com/dulumao/Guten-utils/net/htmltags"
 )
 
 func main() {

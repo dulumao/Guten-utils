@@ -16,12 +16,11 @@ package memcache
 
 import (
 	_ "github.com/bradfitz/gomemcache/memcache"
+	"github.com/dulumao/Guten-utils/os/cache"
 
 	"strconv"
 	"testing"
 	"time"
-
-	"Tada/src/components/os/cache"
 )
 
 func TestMemcacheCache(t *testing.T) {

@@ -1,7 +1,7 @@
 package safemap
 
 import (
-	"Tada/src/components/util/conv"
+	"github.com/dulumao/Guten-utils/conv"
 )
 
 func (self *SafeMap) GetString(k interface{}) string {

@@ -32,11 +32,11 @@ package memcache
 import (
 	"encoding/json"
 	"errors"
+	"github.com/dulumao/Guten-utils/os/cache"
 	"strings"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	"Tada/src/components/os/cache"
 )
 
 // Cache Memcache adapter.

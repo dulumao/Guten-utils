@@ -1,8 +1,8 @@
 package safemap
 
 import (
+	"github.com/dulumao/Guten-utils/conv"
 	"html/template"
-	"Tada/src/components/util/conv"
 )
 
 func (self *SafeMap) ItemsToFuncMap() template.FuncMap {

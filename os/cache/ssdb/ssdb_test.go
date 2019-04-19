@@ -1,10 +1,10 @@
 package ssdb
 
 import (
+	"github.com/dulumao/Guten-utils/os/cache"
 	"strconv"
 	"testing"
 	"time"
-	"Tada/src/components/os/cache"
 )
 
 func TestSsdbcacheCache(t *testing.T) {

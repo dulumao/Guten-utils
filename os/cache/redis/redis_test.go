@@ -1,11 +1,11 @@
 package redis
 
 import (
+	"github.com/dulumao/Guten-utils/os/cache"
 	"testing"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"Tada/src/components/os/cache"
 )
 
 func TestRedisCache(t *testing.T) {
