@@ -1,9 +1,10 @@
 package dump
 
 import (
-	"fmt"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // 格式化打印变量(类似于PHP-vardump)
@@ -25,6 +26,10 @@ func DD(i ...interface{}) {
 	fmt.Println()
 }
 
+func DD2(a ...interface{}) {
+	spew.Dump(a...)
+}
+
 func Printf(i ...interface{}) {
 	fmt.Println()
 
@@ -33,4 +38,8 @@ func Printf(i ...interface{}) {
 	}
 
 	fmt.Println()
+}
+
+func Printf2(format string, a ...interface{}) {
+	spew.Printf(format, a...)
 }
