@@ -24,7 +24,7 @@ type Upload struct {
 
 func New() *Upload {
 	return &Upload{
-		Path:         "public/uploads",
+		Path:         "web/assets/uploads",
 		DateTimeName: true,
 		Mimes:        make([]string, 0),
 	}
