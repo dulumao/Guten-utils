@@ -62,6 +62,22 @@ func (self *Upload) SetOnlyMIMESupported(mimes ...string) *Upload {
 	return self
 }
 
+func (self *Upload) GetMIME(file *multipart.FileHeader) []byte {
+	src, err := file.Open()
+
+	if err != nil {
+		return nil
+	}
+
+	defer src.Close()
+
+	head := make([]byte, 261)
+	src.Read(head)
+	src.Seek(0, 0)
+
+	return head
+}
+
 func (self *Upload) SetSaveFile(file *multipart.FileHeader) (*Upload, error) {
 	src, err := file.Open()
 
