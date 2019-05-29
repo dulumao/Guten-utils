@@ -1,9 +1,9 @@
 package upload
 
 import (
+	"errors"
 	"github.com/dulumao/Guten-utils/rand"
 	"github.com/h2non/filetype"
-	"github.com/pkg/errors"
 	"io"
 	"mime/multipart"
 	"os"
@@ -75,41 +75,46 @@ func (self *Upload) SetSaveFile(file *multipart.FileHeader) (*Upload, error) {
 	src.Read(head)
 	src.Seek(0, 0)
 
-	for _, mime := range self.Mimes {
-		if filetype.IsMIME(head, mime) {
-			self.Ext = path.Ext(file.Filename)
-
-			if self.Ext == "" {
-				self.Ext = ".png"
+	if len(self.Mimes) > 0 {
+		for _, mime := range self.Mimes {
+			if filetype.IsMIME(head, mime) {
+				goto UPLOADFILE
 			}
-
-			if self.DateTimeName {
-				self.FileName = time.Now().Format("150405") + rand.RandStr(4) + self.Ext
-			} else {
-				self.FileName = file.Filename
-			}
-
-			if _, err := os.Stat(self.Path + PathSeparator + self.DirectoryName); err != nil {
-				os.Mkdir(self.Path+PathSeparator+self.DirectoryName, os.ModePerm)
-			}
-
-			// Destination
-			dst, err := os.Create(self.Path + PathSeparator + self.DirectoryName + self.FileName)
-
-			if err != nil {
-				return self, err
-			}
-
-			defer dst.Close()
-
-			// Copy
-			if _, err = io.Copy(dst, src); err != nil {
-				return self, err
-			}
-
-			return self, nil
 		}
+
+		return self, errors.New("类型错误")
 	}
 
-	return self, errors.New("类型错误")
+UPLOADFILE:
+
+	self.Ext = path.Ext(file.Filename)
+
+	if self.Ext == "" {
+		self.Ext = ".bin"
+	}
+
+	if self.DateTimeName {
+		self.FileName = time.Now().Format("150405") + rand.Str(4) + self.Ext
+	} else {
+		self.FileName = file.Filename
+	}
+
+	if _, err := os.Stat(self.Path + PathSeparator + self.DirectoryName); err != nil {
+		os.Mkdir(self.Path+PathSeparator+self.DirectoryName, os.ModePerm)
+	}
+
+	// Destination
+	dst, err := os.Create(self.Path + PathSeparator + self.DirectoryName + self.FileName)
+
+	if err != nil {
+		return self, err
+	}
+
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return self, err
+	}
+
+	return self, nil
 }
