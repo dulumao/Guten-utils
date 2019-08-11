@@ -116,7 +116,7 @@ UPLOADFILE:
 	}
 
 	if _, err := os.Stat(self.Path + PathSeparator + self.DirectoryName); err != nil {
-		os.Mkdir(self.Path+PathSeparator+self.DirectoryName, os.ModePerm)
+		os.MkdirAll(self.Path+PathSeparator+self.DirectoryName, os.ModePerm)
 	}
 
 	// Destination
