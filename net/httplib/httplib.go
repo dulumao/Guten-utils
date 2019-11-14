@@ -49,6 +49,7 @@ var defaultSetting = HTTPSettings{
 
 var defaultCookieJar http.CookieJar
 var settingMutex sync.Mutex
+var Logger *log.Logger
 
 // createDefaultCookie creates a global cookiejar to store cookies.
 func createDefaultCookie() {
@@ -71,7 +72,7 @@ func NewRequest(rawurl, method string) *HTTPRequest {
 	u, err := url.Parse(rawurl)
 
 	if err != nil {
-		log.Println("Httplib:", err)
+		Logger.Println("New Request ERROR:", err.Error())
 	}
 
 	req := http.Request{
@@ -349,13 +350,19 @@ func (b *HTTPRequest) YAMLBody(obj interface{}) (*HTTPRequest, error) {
 func (b *HTTPRequest) JSONBody(obj interface{}) (*HTTPRequest, error) {
 	if b.req.Body == nil && obj != nil {
 		byts, err := json.Marshal(obj)
+
 		if err != nil {
+			Logger.Println("Httplib:", err)
 			return b, err
 		}
+
 		b.req.Body = ioutil.NopCloser(bytes.NewReader(byts))
 		b.req.ContentLength = int64(len(byts))
 		b.req.Header.Set("Content-Type", "application/json")
+
+		Logger.Printf("[JSON Body]: %s", string(byts))
 	}
+
 	return b, nil
 }
 
@@ -367,6 +374,7 @@ func (b *HTTPRequest) buildURL(paramBody string) {
 		} else {
 			b.url = b.url + "?" + paramBody
 		}
+
 		return
 	}
 
@@ -376,21 +384,22 @@ func (b *HTTPRequest) buildURL(paramBody string) {
 		if len(b.files) > 0 {
 			pr, pw := io.Pipe()
 			bodyWriter := multipart.NewWriter(pw)
+
 			go func() {
 				for formname, filename := range b.files {
 					fileWriter, err := bodyWriter.CreateFormFile(formname, filename)
 					if err != nil {
-						log.Println("Httplib:", err)
+						Logger.Println("Httplib:", err)
 					}
 					fh, err := os.Open(filename)
 					if err != nil {
-						log.Println("Httplib:", err)
+						Logger.Println("Httplib:", err)
 					}
 					// iocopy
 					_, err = io.Copy(fileWriter, fh)
 					fh.Close()
 					if err != nil {
-						log.Println("Httplib:", err)
+						Logger.Println("Httplib:", err)
 					}
 				}
 
@@ -415,6 +424,7 @@ func (b *HTTPRequest) buildURL(paramBody string) {
 				bodyWriter.Close()
 				pw.Close()
 			}()
+
 			b.Header("Content-Type", bodyWriter.FormDataContentType())
 			b.req.Body = ioutil.NopCloser(pr)
 			return
@@ -432,11 +442,18 @@ func (b *HTTPRequest) getResponse() (*http.Response, error) {
 	if b.resp.StatusCode != 0 {
 		return b.resp, nil
 	}
+
 	resp, err := b.DoRequest()
+
+	Logger.Printf("[%s]: %s", b.req.Method, b.req.URL.String())
+
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return nil, err
 	}
+
 	b.resp = resp
+
 	return resp, nil
 }
 
@@ -462,9 +479,14 @@ func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 	}
 
 	b.buildURL(paramBody)
+
 	urlParsed, err := url.Parse(b.url)
 
+	Logger.Printf("[param body]: %s", paramBody)
+	Logger.Printf("[Type]: %s", b.req.Header.Get("Content-Type"))
+
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return nil, err
 	}
 
@@ -496,6 +518,7 @@ func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 	}
 
 	var jar http.CookieJar
+
 	if b.setting.EnableCookie {
 		if defaultCookieJar == nil {
 			createDefaultCookie()
@@ -518,9 +541,11 @@ func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 
 	if b.setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.req, b.setting.DumpBody)
+
 		if err != nil {
-			log.Println(err.Error())
+			Logger.Println("Httplib:", err)
 		}
+
 		b.dump = dump
 	}
 	// retries default value is 0, it will run once.
@@ -533,6 +558,7 @@ func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 			break
 		}
 	}
+
 	return resp, err
 }
 
@@ -540,7 +566,9 @@ func (b *HTTPRequest) DoRequest() (resp *http.Response, err error) {
 // it calls Response inner.
 func (b *HTTPRequest) String() (string, error) {
 	data, err := b.Bytes()
+
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return "", err
 	}
 
@@ -555,21 +583,27 @@ func (b *HTTPRequest) Bytes() ([]byte, error) {
 	}
 	resp, err := b.getResponse()
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return nil, err
 	}
 	if resp.Body == nil {
 		return nil, nil
 	}
+
 	defer resp.Body.Close()
+
 	if b.setting.Gzip && resp.Header.Get("Content-Encoding") == "gzip" {
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
+			Logger.Println("Httplib:", err)
 			return nil, err
 		}
 		b.body, err = ioutil.ReadAll(reader)
 		return b.body, err
 	}
+
 	b.body, err = ioutil.ReadAll(resp.Body)
+
 	return b.body, err
 }
 
@@ -577,20 +611,28 @@ func (b *HTTPRequest) Bytes() ([]byte, error) {
 // it calls Response inner.
 func (b *HTTPRequest) ToFile(filename string) error {
 	f, err := os.Create(filename)
+
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return err
 	}
+
 	defer f.Close()
 
 	resp, err := b.getResponse()
+
 	if err != nil {
+		Logger.Println("Httplib:", err)
 		return err
 	}
 	if resp.Body == nil {
 		return nil
 	}
+
 	defer resp.Body.Close()
+
 	_, err = io.Copy(f, resp.Body)
+
 	return err
 }
 
@@ -598,9 +640,11 @@ func (b *HTTPRequest) ToFile(filename string) error {
 // it calls Response inner.
 func (b *HTTPRequest) ToJSON(v interface{}) error {
 	data, err := b.Bytes()
+
 	if err != nil {
 		return err
 	}
+
 	return json.Unmarshal(data, v)
 }
 
@@ -608,9 +652,11 @@ func (b *HTTPRequest) ToJSON(v interface{}) error {
 // it calls Response inner.
 func (b *HTTPRequest) ToXML(v interface{}) error {
 	data, err := b.Bytes()
+
 	if err != nil {
 		return err
 	}
+
 	return xml.Unmarshal(data, v)
 }
 
@@ -618,9 +664,11 @@ func (b *HTTPRequest) ToXML(v interface{}) error {
 // it calls Response inner.
 func (b *HTTPRequest) ToYAML(v interface{}) error {
 	data, err := b.Bytes()
+
 	if err != nil {
 		return err
 	}
+
 	return yaml.Unmarshal(data, v)
 }
 
@@ -639,4 +687,9 @@ func TimeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, ad
 		err = conn.SetDeadline(time.Now().Add(rwTimeout))
 		return conn, err
 	}
+}
+
+func init() {
+	// Logger = log.New(os.Stderr, "", log.LstdFlags)
+	Logger = log.New(ioutil.Discard, "", log.LstdFlags)
 }

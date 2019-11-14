@@ -2,6 +2,7 @@ package httplib
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -11,9 +12,33 @@ import (
 func TestResponse(t *testing.T) {
 	req := Get("http://httpbin.org/get")
 	resp, err := req.Response()
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log(resp)
+}
+
+func TestJSON(t *testing.T) {
+	// fileName := fmt.Sprintf("%s.log", time.Now().Format("20060102"))
+	// fd, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	// logger := log.New(fd, "", log.LstdFlags)
+	//
+	Logger = log.New(os.Stdout, "", log.LstdFlags)
+	req := Post("http://httpbin.org/get")
+	resp, err := req.JSONBody(struct {
+		Username string
+	}{
+		Username: "Admin",
+	})
+
+	req.Response()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Log(resp)
 }
 
@@ -53,24 +78,24 @@ func TestSimplePost(t *testing.T) {
 	}
 }
 
-//func TestPostFile(t *testing.T) {
-//	v := "smallfish"
-//	req := Post("http://httpbin.org/post")
-//	req.Debug(true)
-//	req.Param("username", v)
-//	req.PostFile("uploadfile", "httplib_test.go")
+// func TestPostFile(t *testing.T) {
+// 	v := "smallfish"
+// 	req := Post("http://httpbin.org/post")
+// 	req.Debug(true)
+// 	req.Param("username", v)
+// 	req.PostFile("uploadfile", "httplib_test.go")
 
-//	str, err := req.String()
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	t.Log(str)
+// 	str, err := req.String()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Log(str)
 
-//	n := strings.Index(str, v)
-//	if n == -1 {
-//		t.Fatal(v + " not found in post")
-//	}
-//}
+// 	n := strings.Index(str, v)
+// 	if n == -1 {
+// 		t.Fatal(v + " not found in post")
+// 	}
+// }
 
 func TestSimplePut(t *testing.T) {
 	str, err := Put("http://httpbin.org/put").String()
