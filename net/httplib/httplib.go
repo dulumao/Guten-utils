@@ -310,10 +310,14 @@ func (b *HTTPRequest) Body(data interface{}) *HTTPRequest {
 		bf := bytes.NewBufferString(t)
 		b.req.Body = ioutil.NopCloser(bf)
 		b.req.ContentLength = int64(len(t))
+
+		Logger.Printf("[Body]: %s", bf.String())
 	case []byte:
 		bf := bytes.NewBuffer(t)
 		b.req.Body = ioutil.NopCloser(bf)
 		b.req.ContentLength = int64(len(t))
+
+		Logger.Println("[Bytes Body]: ...")
 	}
 	return b
 }
@@ -328,6 +332,8 @@ func (b *HTTPRequest) XMLBody(obj interface{}) (*HTTPRequest, error) {
 		b.req.Body = ioutil.NopCloser(bytes.NewReader(byts))
 		b.req.ContentLength = int64(len(byts))
 		b.req.Header.Set("Content-Type", "application/xml")
+
+		Logger.Println("[XML Body]: ...")
 	}
 	return b, nil
 }
@@ -342,6 +348,8 @@ func (b *HTTPRequest) YAMLBody(obj interface{}) (*HTTPRequest, error) {
 		b.req.Body = ioutil.NopCloser(bytes.NewReader(byts))
 		b.req.ContentLength = int64(len(byts))
 		b.req.Header.Set("Content-Type", "application/x+yaml")
+
+		Logger.Println("[Yaml Body]: ...")
 	}
 	return b, nil
 }
